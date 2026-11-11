@@ -1,0 +1,9 @@
+*.class
+out/
+bin/
+.idea/
+*.iml
+.vscode/
+nbproject/private/
+data/transaksi.csv
+data/anggaran.csv

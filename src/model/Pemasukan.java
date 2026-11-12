@@ -16,7 +16,7 @@ public class Pemasukan extends Transaksi {
 
     @Override
     public double hitungDampakSaldo() {
-        return 0; // TODO (Bayu): return +getNominal()
+        return getNominal(); // Mengembalikan +nominal
     }
 
     @Override

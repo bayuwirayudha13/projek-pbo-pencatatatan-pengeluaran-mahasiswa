@@ -16,7 +16,7 @@ public abstract class Transaksi {
     public Transaksi(String id, LocalDate tanggal, double nominal, String kategori, String catatan) {
         this.id = id;
         this.tanggal = tanggal;
-        this.nominal = nominal; // TODO (Bayu): validasi nominal > 0
+        setNominal(nominal); // Memanggil setNominal agar langsung tervalidasi > 0
         this.kategori = kategori;
         this.catatan = catatan;
     }
@@ -28,7 +28,14 @@ public abstract class Transaksi {
     public String getCatatan() { return catatan; }
 
     public void setTanggal(LocalDate tanggal) { this.tanggal = tanggal; }
-    public void setNominal(double nominal) { this.nominal = nominal; } // TODO (Bayu): lempar IllegalArgumentException jika <= 0
+    
+    public void setNominal(double nominal) {
+        if (nominal <= 0) {
+            throw new IllegalArgumentException("Nominal transaksi harus lebih besar dari 0.");
+        }
+        this.nominal = nominal;
+    }
+    
     public void setKategori(String kategori) { this.kategori = kategori; }
     public void setCatatan(String catatan) { this.catatan = catatan; }
 

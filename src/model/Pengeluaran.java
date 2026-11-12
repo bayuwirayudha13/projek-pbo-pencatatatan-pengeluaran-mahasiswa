@@ -9,15 +9,21 @@ public class Pengeluaran extends Transaksi {
 
     public Pengeluaran(String id, LocalDate tanggal, double nominal, String kategori, String catatan, String prioritas) {
         super(id, tanggal, nominal, kategori, catatan);
-        this.prioritas = prioritas;
+        setPrioritas(prioritas);
     }
 
     public String getPrioritas() { return prioritas; }
-    public void setPrioritas(String prioritas) { this.prioritas = prioritas; }
+    
+    public void setPrioritas(String prioritas) {
+        if (prioritas == null || (!prioritas.equalsIgnoreCase("Kebutuhan") && !prioritas.equalsIgnoreCase("Keinginan"))) {
+            throw new IllegalArgumentException("Prioritas harus 'Kebutuhan' atau 'Keinginan'.");
+        }
+        this.prioritas = prioritas;
+    }
 
     @Override
     public double hitungDampakSaldo() {
-        return 0; // TODO (Bayu): return -getNominal()
+        return -getNominal(); // Mengembalikan -nominal
     }
 
     @Override

@@ -1,6 +1,8 @@
 package service;
 
 import budget.PengendaliAnggaran;
+import model.Pemasukan;
+import model.Pengeluaran;
 import model.Transaksi;
 
 import java.io.IOException;
@@ -16,6 +18,9 @@ public class ManajerMySaku implements PenyimpananData {
     private PengendaliAnggaran anggaran = new PengendaliAnggaran();
 
     public void tambahTransaksi(Transaksi t) {
+        if (t == null) {
+            throw new IllegalArgumentException("Transaksi tidak boleh null.");
+        }
         daftar.add(t);
     }
 
@@ -24,28 +29,80 @@ public class ManajerMySaku implements PenyimpananData {
     }
 
     public void ubahTransaksi(String id, Transaksi baru) {
-        // TODO (Neha): cari berdasarkan id, ganti; lempar exception jika tidak ketemu
+        if (id == null || id.trim().isEmpty()) {
+            throw new IllegalArgumentException("ID transaksi wajib diisi.");
+        }
+        if (baru == null) {
+            throw new IllegalArgumentException("Transaksi baru tidak boleh null.");
+        }
+
+        for (int i = 0; i < daftar.size(); i++) {
+            if (id.equals(daftar.get(i).getId())) {
+                daftar.set(i, baru);
+                return;
+            }
+        }
+        throw new IllegalArgumentException("Transaksi dengan ID " + id + " tidak ditemukan.");
     }
 
     public void hapusTransaksi(String id) {
-        // TODO (Neha)
+        if (id == null || id.trim().isEmpty()) {
+            throw new IllegalArgumentException("ID transaksi wajib diisi.");
+        }
+
+        for (int i = 0; i < daftar.size(); i++) {
+            if (id.equals(daftar.get(i).getId())) {
+                daftar.remove(i);
+                return;
+            }
+        }
+        throw new IllegalArgumentException("Transaksi dengan ID " + id + " tidak ditemukan.");
     }
 
     public List<Transaksi> cariTransaksi(String kata) {
-        return new ArrayList<>(); // TODO (Neha): cari di id, kategori, catatan (abaikan huruf besar-kecil)
+        ArrayList<Transaksi> hasil = new ArrayList<>();
+        if (kata == null || kata.trim().isEmpty()) {
+            return hasil;
+        }
+
+        String kataKunci = kata.trim().toLowerCase();
+        for (Transaksi transaksi : daftar) {
+            if (containsIgnoreCase(transaksi.getId(), kataKunci)
+                    || containsIgnoreCase(transaksi.getKategori(), kataKunci)
+                    || containsIgnoreCase(transaksi.getCatatan(), kataKunci)) {
+                hasil.add(transaksi);
+            }
+        }
+        return hasil;
     }
 
     public double getTotalPemasukan() {
-        return 0; // TODO (Neha)
+        double total = 0;
+        for (Transaksi transaksi : daftar) {
+            if (transaksi instanceof Pemasukan) {
+                total += transaksi.getNominal();
+            }
+        }
+        return total;
     }
 
     public double getTotalPengeluaran() {
-        return 0; // TODO (Neha)
+        double total = 0;
+        for (Transaksi transaksi : daftar) {
+            if (transaksi instanceof Pengeluaran) {
+                total += transaksi.getNominal();
+            }
+        }
+        return total;
     }
 
     /** Hitung dengan memanggil hitungDampakSaldo() tiap objek (polimorfisme). */
     public double getSaldo() {
-        return 0; // TODO (Neha)
+        double saldo = 0;
+        for (Transaksi transaksi : daftar) {
+            saldo += transaksi.hitungDampakSaldo();
+        }
+        return saldo;
     }
 
     public PengendaliAnggaran getAnggaran() {
@@ -53,7 +110,24 @@ public class ManajerMySaku implements PenyimpananData {
     }
 
     public String generateId() {
-        return "TRX" + (daftar.size() + 1); // TODO (Neha): pastikan tidak bentrok setelah ada yang dihapus
+        int nomor = 1;
+        while (containsId("TRX" + nomor)) {
+            nomor++;
+        }
+        return "TRX" + nomor;
+    }
+
+    private boolean containsId(String id) {
+        for (Transaksi transaksi : daftar) {
+            if (id.equals(transaksi.getId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean containsIgnoreCase(String teks, String kataKunci) {
+        return teks != null && teks.toLowerCase().contains(kataKunci);
     }
 
     @Override

@@ -21,7 +21,7 @@ public class MySakuGUI extends JFrame {
         this.manajer = manajer;
 
         setTitle("MySaku - Pencatat Keuangan Mahasiswa");
-        setSize(1000, 650);
+        setSize(1100, 800);
         setMinimumSize(new Dimension(850, 550));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -58,7 +58,7 @@ public class MySakuGUI extends JFrame {
         contentPanel.add(tabelPanel, BorderLayout.CENTER);
 
         // Area ringkasan
-        ringkasanPanel.setPreferredSize(new Dimension(100, 100));
+        ringkasanPanel.setPreferredSize(new Dimension(100, 230));
 
         add(headerPanel, BorderLayout.NORTH);
         add(contentPanel, BorderLayout.CENTER);

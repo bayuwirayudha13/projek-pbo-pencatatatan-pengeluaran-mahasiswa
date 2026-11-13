@@ -19,10 +19,11 @@ public class FormTransaksiPanel extends JPanel {
 
     private ManajerMySaku manajer;
     private Runnable onTransaksiDisimpan;
+
     private JComboBox<String> pilihanJenis;
     private JTextField inputNominal;
     private JTextField inputTanggal;
-    private JTextField inputKategori;
+    private JComboBox<String> pilihanKategori;
     private JTextField inputCatatan;
 
     private JLabel labelDetail;
@@ -33,7 +34,9 @@ public class FormTransaksiPanel extends JPanel {
 
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(220, 225, 230)),
+            BorderFactory.createLineBorder(
+                new Color(220, 225, 230)
+            ),
             BorderFactory.createEmptyBorder(15, 15, 15, 15)
         ));
         setBackground(Color.WHITE);
@@ -42,24 +45,23 @@ public class FormTransaksiPanel extends JPanel {
         JLabel judul = new JLabel("Tambah Transaksi");
         judul.setFont(new Font("SansSerif", Font.BOLD, 18));
 
-        // Membuat komponen input
+        // Pilihan jenis transaksi
         pilihanJenis = new JComboBox<>(
             new String[]{"Pemasukan", "Pengeluaran"}
         );
 
         inputNominal = new JTextField();
         inputTanggal = new JTextField(LocalDate.now().toString());
-        inputKategori = new JTextField();
+        pilihanKategori = new JComboBox<>();
         inputCatatan = new JTextField();
 
         labelDetail = new JLabel("Sumber Pemasukan");
+        pilihanDetail = new JComboBox<>();
 
-        pilihanDetail = new JComboBox<>(
-            new String[]{"Orang Tua", "Beasiswa", "Kerja", "Lainnya"}
+        // Panel input
+        JPanel panelInput = new JPanel(
+            new GridLayout(0, 1, 5, 5)
         );
-
-        // Panel untuk menampung input
-        JPanel panelInput = new JPanel(new GridLayout(0, 1, 5, 5));
         panelInput.setBackground(Color.WHITE);
 
         panelInput.add(new JLabel("Jenis Transaksi"));
@@ -72,7 +74,7 @@ public class FormTransaksiPanel extends JPanel {
         panelInput.add(inputTanggal);
 
         panelInput.add(new JLabel("Kategori"));
-        panelInput.add(inputKategori);
+        panelInput.add(pilihanKategori);
 
         panelInput.add(new JLabel("Catatan"));
         panelInput.add(inputCatatan);
@@ -86,10 +88,12 @@ public class FormTransaksiPanel extends JPanel {
         tombolSimpan.setForeground(Color.WHITE);
         tombolSimpan.setFocusPainted(false);
 
-        // Mengubah pilihan detail sesuai jenis transaksi
-        pilihanJenis.addActionListener(e -> ubahPilihanDetail());
+        // Mengubah kategori dan detail saat jenis berubah
+        pilihanJenis.addActionListener(e -> ubahPilihanJenis());
 
-        // Menyimpan transaksi
+        // Inisialisasi pilihan pertama
+        ubahPilihanJenis();
+
         tombolSimpan.addActionListener(e -> simpanTransaksi());
 
         add(judul, BorderLayout.NORTH);
@@ -97,72 +101,134 @@ public class FormTransaksiPanel extends JPanel {
         add(tombolSimpan, BorderLayout.SOUTH);
     }
 
-    private void ubahPilihanDetail() {
+    /**
+     * Mengatur pilihan kategori dan detail
+     * berdasarkan jenis transaksi.
+     */
+    private void ubahPilihanJenis() {
+
         String jenis = (String) pilihanJenis.getSelectedItem();
 
+        pilihanKategori.removeAllItems();
         pilihanDetail.removeAllItems();
 
         if ("Pemasukan".equals(jenis)) {
+
+            // Kategori pemasukan
+            pilihanKategori.addItem("Uang Saku");
+            pilihanKategori.addItem("Beasiswa");
+            pilihanKategori.addItem("Hasil Kerja");
+            pilihanKategori.addItem("Hadiah");
+            pilihanKategori.addItem("Lainnya");
+
+            // Sumber pemasukan
             labelDetail.setText("Sumber Pemasukan");
 
             pilihanDetail.addItem("Orang Tua");
-            pilihanDetail.addItem("Beasiswa");
-            pilihanDetail.addItem("Kerja");
+            pilihanDetail.addItem("Kampus");
+            pilihanDetail.addItem("Klien");
+            pilihanDetail.addItem("Keluarga");
             pilihanDetail.addItem("Lainnya");
 
         } else {
+
+            // Kategori pengeluaran
+            pilihanKategori.addItem("Makanan");
+            pilihanKategori.addItem("Transportasi");
+            pilihanKategori.addItem("Akademik");
+            pilihanKategori.addItem("Internet");
+            pilihanKategori.addItem("Hiburan");
+            pilihanKategori.addItem("Belanja");
+            pilihanKategori.addItem("Lainnya");
+
+            // Prioritas pengeluaran
             labelDetail.setText("Prioritas Pengeluaran");
 
             pilihanDetail.addItem("Kebutuhan");
             pilihanDetail.addItem("Keinginan");
         }
     }
-    public void setOnTransaksiDisimpan(Runnable callback) {
-    this.onTransaksiDisimpan = callback;
-}
-    private void simpanTransaksi() {
-        try {
-            // Mengambil data dari form
-            String jenis = (String) pilihanJenis.getSelectedItem();
-            double nominal = Double.parseDouble(inputNominal.getText().trim());
-            LocalDate tanggal = LocalDate.parse(inputTanggal.getText().trim());
 
-            String kategori = inputKategori.getText().trim();
+    public void setOnTransaksiDisimpan(Runnable callback) {
+        this.onTransaksiDisimpan = callback;
+    }
+
+    /**
+     * Menyimpan transaksi.
+     */
+    private void simpanTransaksi() {
+
+        try {
+
+            String jenis = (String) pilihanJenis.getSelectedItem();
+
+            double nominal = Double.parseDouble(
+                inputNominal.getText().trim()
+            );
+
+            LocalDate tanggal = LocalDate.parse(
+                inputTanggal.getText().trim()
+            );
+
+            String kategori = (String) pilihanKategori.getSelectedItem();
             String catatan = inputCatatan.getText().trim();
             String detail = (String) pilihanDetail.getSelectedItem();
 
-            // Validasi input
+            // Validasi nominal
             if (nominal <= 0) {
                 throw new IllegalArgumentException(
                     "Nominal harus lebih dari 0."
                 );
             }
 
-            if (kategori.isEmpty()) {
+            // Validasi kategori
+            if (kategori == null || kategori.isEmpty()) {
                 throw new IllegalArgumentException(
-                    "Kategori wajib diisi."
+                    "Kategori wajib dipilih."
                 );
             }
 
-            // Membuat objek transaksi
+            // Validasi detail
+            if (detail == null || detail.isEmpty()) {
+                throw new IllegalArgumentException(
+                    "Silakan pilih sumber atau prioritas transaksi."
+                );
+            }
+
+            // Membuat transaksi
             String id = manajer.generateId();
             Transaksi transaksi;
 
             if ("Pemasukan".equals(jenis)) {
+
                 transaksi = new Pemasukan(
-                    id, tanggal, nominal, kategori, catatan, detail
+                    id,
+                    tanggal,
+                    nominal,
+                    kategori,
+                    catatan,
+                    detail
                 );
+
             } else {
+
                 transaksi = new Pengeluaran(
-                    id, tanggal, nominal, kategori, catatan, detail
+                    id,
+                    tanggal,
+                    nominal,
+                    kategori,
+                    catatan,
+                    detail
                 );
             }
 
-            // Menambahkan transaksi ke pengelola
+            // Menambahkan transaksi
             manajer.tambahTransaksi(transaksi);
+
+            // Memperbarui tabel dan ringkasan
             if (onTransaksiDisimpan != null) {
-    onTransaksiDisimpan.run();
-}
+                onTransaksiDisimpan.run();
+            }
 
             JOptionPane.showMessageDialog(
                 this,
@@ -171,13 +237,13 @@ public class FormTransaksiPanel extends JPanel {
                 JOptionPane.INFORMATION_MESSAGE
             );
 
-            // Mengosongkan beberapa input
+            // Mengosongkan input
             inputNominal.setText("");
-            inputKategori.setText("");
             inputCatatan.setText("");
             inputTanggal.setText(LocalDate.now().toString());
 
         } catch (NumberFormatException e) {
+
             JOptionPane.showMessageDialog(
                 this,
                 "Nominal harus berupa angka.",
@@ -186,6 +252,7 @@ public class FormTransaksiPanel extends JPanel {
             );
 
         } catch (DateTimeParseException e) {
+
             JOptionPane.showMessageDialog(
                 this,
                 "Format tanggal harus yyyy-MM-dd.",
@@ -194,6 +261,7 @@ public class FormTransaksiPanel extends JPanel {
             );
 
         } catch (IllegalArgumentException e) {
+
             JOptionPane.showMessageDialog(
                 this,
                 e.getMessage(),

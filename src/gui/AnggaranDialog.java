@@ -116,6 +116,17 @@ public class AnggaranDialog extends JDialog {
 
             // Menyimpan batas melalui PengendaliAnggaran
             manajer.getAnggaran().setBatasHarian(batas);
+            try {
+                manajer.simpanKeFile();
+            } catch (java.io.IOException e) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Anggaran gagal disimpan ke file: " + e.getMessage(),
+                    "Kesalahan Penyimpanan",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
 
             // Menghitung pengeluaran hari ini
             AnalisisKeuangan analisis = new AnalisisKeuangan();

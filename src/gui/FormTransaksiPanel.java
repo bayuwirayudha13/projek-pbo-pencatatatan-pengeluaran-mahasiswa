@@ -224,6 +224,17 @@ public class FormTransaksiPanel extends JPanel {
 
             // Menambahkan transaksi
             manajer.tambahTransaksi(transaksi);
+            try {
+    manajer.simpanKeFile();
+} catch (java.io.IOException e) {
+    JOptionPane.showMessageDialog(
+        this,
+        "Transaksi gagal disimpan ke file: " + e.getMessage(),
+        "Kesalahan Penyimpanan",
+        JOptionPane.ERROR_MESSAGE
+    );
+    return;
+}
 
             // Memperbarui tabel dan ringkasan
             if (onTransaksiDisimpan != null) {

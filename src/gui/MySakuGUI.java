@@ -8,6 +8,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -17,7 +18,8 @@ import java.util.Locale;
  * Dikerjakan oleh: ALHIYA
  *
  * Layout: sidebar navigasi di kiri, header dan halaman di kanan.
- * Halaman: Dashboard (ringkasan), Transaksi Baru (form), Riwayat (tabel).
+ * Halaman: Dashboard (ringkasan), Transaksi Baru (form + info),
+ * Riwayat (tabel).
  */
 public class MySakuGUI extends JFrame {
 
@@ -32,6 +34,7 @@ public class MySakuGUI extends JFrame {
     private FormTransaksiPanel formPanel;
     private TabelTransaksiPanel tabelPanel;
     private RingkasanPanel ringkasanPanel;
+    private PanelInfoTransaksi infoPanel;
 
     private CardLayout cardLayout;
     private JPanel areaHalaman;
@@ -44,7 +47,7 @@ public class MySakuGUI extends JFrame {
 
         setTitle("MySaku - Pencatat Keuangan Mahasiswa");
         setSize(1280, 800);
-        setMinimumSize(new Dimension(1000, 650));
+        setMinimumSize(new Dimension(1100, 680));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -55,12 +58,14 @@ public class MySakuGUI extends JFrame {
         formPanel = new FormTransaksiPanel(manajer);
         tabelPanel = new TabelTransaksiPanel(manajer);
         ringkasanPanel = new RingkasanPanel(manajer);
+        infoPanel = new PanelInfoTransaksi(manajer);
 
         // Setelah transaksi disimpan, diubah, atau dihapus,
-        // perbarui tabel dan ringkasan
+        // perbarui tabel, ringkasan, dan panel info
         formPanel.setOnTransaksiDisimpan(() -> {
             tabelPanel.refreshTable();
             ringkasanPanel.refreshRingkasan();
+            infoPanel.refreshInfo();
         });
 
         // Saat baris tabel dipilih untuk diubah, isi form lalu
@@ -69,6 +74,9 @@ public class MySakuGUI extends JFrame {
             formPanel.isiUntukUbah(transaksi);
             tampilkanHalaman(HALAMAN_FORM);
         });
+
+        // Tombol "Lihat Semua" di panel info membuka Riwayat
+        infoPanel.setOnLihatSemua(() -> tampilkanHalaman(HALAMAN_RIWAYAT));
 
         add(buatSidebar(), BorderLayout.WEST);
         add(buatAreaKanan(), BorderLayout.CENTER);
@@ -109,7 +117,7 @@ public class MySakuGUI extends JFrame {
         ));
 
         labelJudul = UITheme.label(
-            "", UITheme.font(Font.BOLD, 22), UITheme.TEXT
+            "", UITheme.font(Font.BOLD, 22), UITheme.PRIMARY
         );
         labelSubjudul = UITheme.label(
             "", UITheme.font(Font.PLAIN, 13), UITheme.TEXT_MUTED
@@ -130,7 +138,7 @@ public class MySakuGUI extends JFrame {
             )
         );
         UITheme.Badge pilTanggal = new UITheme.Badge(
-            tanggal, UITheme.PRIMARY_DARK, UITheme.PRIMARY_SOFT
+            tanggal, UITheme.PRIMARY, UITheme.PRIMARY_SOFT
         );
         pilTanggal.setFont(UITheme.font(Font.BOLD, 12));
         pilTanggal.setBorder(new EmptyBorder(8, 16, 8, 16));
@@ -146,42 +154,50 @@ public class MySakuGUI extends JFrame {
 
     // ===================== HALAMAN =====================
 
-    private JComponent buatHalamanDashboard() {
-        // Panel menentukan tinggi sendiri, ditempel di bagian atas halaman
+        private JComponent buatHalamanDashboard() {
+        // RingkasanPanel punya scroll sendiri, jadi dibiarkan mengisi halaman
         ringkasanPanel.setOpaque(false);
 
-        JPanel halaman = new JPanel(new GridBagLayout());
+        JPanel halaman = new JPanel(new BorderLayout());
         halaman.setOpaque(false);
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 1;
-        gbc.weighty = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.anchor = GridBagConstraints.NORTH;
-        halaman.add(ringkasanPanel, gbc);
+        halaman.add(ringkasanPanel, BorderLayout.CENTER);
         return halaman;
     }
 
+    /**
+     * Dua kolom: form di kiri (420-540 px), panel info mengisi sisanya.
+     */
     private JComponent buatHalamanForm() {
-        // Form dibuat selebar 540 px dan diletakkan di tengah atas halaman
         int tinggi = formPanel.getPreferredSize().height;
         formPanel.setPreferredSize(new Dimension(540, tinggi));
+        formPanel.setMinimumSize(new Dimension(420, tinggi));
+        infoPanel.setMinimumSize(new Dimension(300, 0));
 
-        JPanel pembungkus = new JPanel(new GridBagLayout());
+        JPanel baris = new JPanel(new GridBagLayout());
+        baris.setOpaque(false);
+
+        GridBagConstraints kiri = new GridBagConstraints();
+        kiri.gridx = 0;
+        kiri.gridy = 0;
+        kiri.weightx = 0;
+        kiri.weighty = 1;
+        kiri.fill = GridBagConstraints.BOTH;
+        kiri.insets = new Insets(0, 0, 0, 20);
+        baris.add(formPanel, kiri);
+
+        GridBagConstraints kanan = new GridBagConstraints();
+        kanan.gridx = 1;
+        kanan.gridy = 0;
+        kanan.weightx = 1;
+        kanan.weighty = 1;
+        kanan.fill = GridBagConstraints.BOTH;
+        baris.add(infoPanel, kanan);
+
+        JPanel pembungkus = new JPanel(new BorderLayout());
         pembungkus.setOpaque(false);
+        pembungkus.add(baris, BorderLayout.NORTH);
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 1;
-        gbc.weighty = 1;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.anchor = GridBagConstraints.NORTH;
-        pembungkus.add(formPanel, gbc);
-
-        // Scroll muncul otomatis jika jendela dikecilkan
+        // Scroll muncul otomatis jika jendela dipendekkan
         JScrollPane scroll = new JScrollPane(pembungkus);
         scroll.setBorder(null);
         scroll.setOpaque(false);
@@ -215,6 +231,7 @@ public class MySakuGUI extends JFrame {
                 labelSubjudul.setText(
                     "Catat pemasukan atau pengeluaranmu hari ini"
                 );
+                infoPanel.refreshInfo();
                 break;
             case HALAMAN_RIWAYAT:
                 labelJudul.setText("Riwayat Transaksi");
@@ -223,13 +240,27 @@ public class MySakuGUI extends JFrame {
                 );
                 break;
             default:
-                labelJudul.setText("Dashboard");
+                labelJudul.setText(sapaan() + "!");
                 labelSubjudul.setText(
-                    "Ringkasan keuangan dan anggaran harianmu"
+                    "Ini ringkasan keuangan dan anggaran harianmu"
                 );
                 ringkasanPanel.refreshRingkasan();
                 break;
         }
+    }
+
+    private String sapaan() {
+        int jam = LocalTime.now().getHour();
+        if (jam < 11) {
+            return "Selamat pagi";
+        }
+        if (jam < 15) {
+            return "Selamat siang";
+        }
+        if (jam < 18) {
+            return "Selamat sore";
+        }
+        return "Selamat malam";
     }
 
     private void bukaDialogAnggaran() {
@@ -237,6 +268,7 @@ public class MySakuGUI extends JFrame {
         dialog.setVisible(true);
 
         ringkasanPanel.refreshRingkasan();
+        infoPanel.refreshInfo();
     }
 
     // ===================== SIDEBAR =====================
@@ -247,8 +279,8 @@ public class MySakuGUI extends JFrame {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setPaint(new GradientPaint(
-                    0, 0, UITheme.PRIMARY_DARK,
-                    0, getHeight(), new Color(23, 44, 108)
+                    0, 0, UITheme.SIDEBAR_TOP,
+                    0, getHeight(), UITheme.SIDEBAR_BOTTOM
                 ));
                 g2.fillRect(0, 0, getWidth(), getHeight());
                 g2.dispose();
@@ -262,7 +294,7 @@ public class MySakuGUI extends JFrame {
         sidebar.add(Box.createVerticalStrut(34));
 
         JLabel labelMenu = UITheme.label(
-            "MENU", UITheme.font(Font.BOLD, 11), new Color(147, 170, 226)
+            "MENU", UITheme.font(Font.BOLD, 11), UITheme.SIDEBAR_MUTED
         );
         labelMenu.setBorder(new EmptyBorder(0, 12, 0, 0));
         labelMenu.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -294,7 +326,7 @@ public class MySakuGUI extends JFrame {
         JLabel tagline = UITheme.label(
             "Keuangan Mahasiswa",
             UITheme.font(Font.PLAIN, 11),
-            new Color(191, 210, 255)
+            UITheme.SIDEBAR_TEXT
         );
         nama.setAlignmentX(Component.LEFT_ALIGNMENT);
         tagline.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -329,7 +361,7 @@ public class MySakuGUI extends JFrame {
      */
     private JComponent buatKartuAnggaran() {
         UITheme.RoundedPanel kartu = new UITheme.RoundedPanel(
-            18, new Color(255, 255, 255, 30)
+            18, new Color(255, 255, 255, 28)
         );
         kartu.setLayout(new BoxLayout(kartu, BoxLayout.Y_AXIS));
         kartu.setBorder(new EmptyBorder(16, 16, 16, 16));
@@ -352,7 +384,7 @@ public class MySakuGUI extends JFrame {
                 + "Tetapkan batas harian agar pengeluaranmu tetap terkendali."
                 + "</div></html>",
             UITheme.font(Font.PLAIN, 12),
-            new Color(205, 220, 255)
+            UITheme.SIDEBAR_TEXT
         );
         deskripsi.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -382,7 +414,8 @@ public class MySakuGUI extends JFrame {
     // ===================== KOMPONEN KECIL =====================
 
     /**
-     * Item menu sidebar: kapsul biru saat aktif, transparan saat hover.
+     * Item menu sidebar: kapsul gradien ungu saat aktif,
+     * transparan saat hover.
      */
     private class NavItem extends JButton {
 
@@ -438,14 +471,17 @@ public class MySakuGUI extends JFrame {
             int h = getHeight();
 
             if (aktif) {
-                g2.setColor(UITheme.PRIMARY);
+                g2.setPaint(new GradientPaint(
+                    0, 0, UITheme.PRIMARY,
+                    w, 0, UITheme.PRIMARY_LIGHT
+                ));
                 g2.fillRoundRect(0, 0, w, h, 14, 14);
             } else if (hover) {
-                g2.setColor(new Color(255, 255, 255, 26));
+                g2.setColor(new Color(255, 255, 255, 24));
                 g2.fillRoundRect(0, 0, w, h, 14, 14);
             }
 
-            Color warna = aktif ? Color.WHITE : new Color(199, 214, 247);
+            Color warna = aktif ? Color.WHITE : UITheme.SIDEBAR_TEXT;
 
             new UITheme.VectorIcon(ikon, 20, warna)
                 .paintIcon(this, g2, 16, (h - 20) / 2);
@@ -481,7 +517,7 @@ public class MySakuGUI extends JFrame {
 
             g2.setPaint(new GradientPaint(
                 0, 0, UITheme.PRIMARY,
-                getWidth(), getHeight(), new Color(96, 165, 250)
+                getWidth(), getHeight(), UITheme.PRIMARY_LIGHT
             ));
             g2.fillRoundRect(0, 0, getWidth(), getHeight(), 14, 14);
 

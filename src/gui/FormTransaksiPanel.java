@@ -1,3 +1,4 @@
+
 package gui;
 
 import analisis.AnalisisKeuangan;
@@ -104,6 +105,7 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
         labelHintNominal = UITheme.label(
             " ", UITheme.font(Font.PLAIN, 12), UITheme.TEXT_MUTED
         );
+
         inputNominal.getDocument().addDocumentListener(
             new DocumentListener() {
                 @Override
@@ -208,7 +210,6 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
 
     /**
      * Mengisi form dengan data transaksi dan masuk ke mode ubah.
-     * Dipanggil dari tabel saat baris dipilih.
      */
     public void isiUntukUbah(Transaksi t) {
         if (t == null) {
@@ -281,9 +282,6 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
 
     // ===================== LOGIKA TAMPILAN =====================
 
-    /**
-     * Mengatur kategori dan detail sesuai jenis transaksi.
-     */
     private void ubahPilihanJenis() {
 
         String jenis = toggleJenis.getSelected();
@@ -389,12 +387,6 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
 
     // ===================== LOGIKA DATA =====================
 
-    /**
-     * Merapikan input nominal sebelum divalidasi:
-     * - awalan "Rp" dibuang
-     * - titik pemisah ribuan (50.000) dibuang, karena
-     *   Double.parseDouble("50.000") akan terbaca 50.0
-     */
     private String normalisasiNominal(String teks) {
         String hasil = teks == null ? "" : teks.trim();
         hasil = hasil.replaceAll("(?i)^rp\\s*", "");
@@ -489,7 +481,6 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
                 return;
             }
 
-            // Memperbarui tabel dan ringkasan
             if (onTransaksiDisimpan != null) {
                 onTransaksiDisimpan.run();
             }
@@ -605,8 +596,8 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
     }
 
     /**
-     * Mengembalikan teks peringatan jika pengeluaran hari ini
-     * mendekati atau melampaui batas harian; selain itu null.
+     * Mengembalikan peringatan jika pengeluaran pada tanggal tertentu
+     * mendekati atau melampaui anggaran tanggal tersebut.
      */
     private String cekPeringatanAnggaran(Transaksi transaksi) {
 
@@ -614,20 +605,36 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
             return null;
         }
 
-        double batas = manajer.getAnggaran().getBatasHarian();
+        LocalDate tanggalTransaksi = transaksi.getTanggal();
+
+        if (tanggalTransaksi == null) {
+            return null;
+        }
+
+        // Peringatan hanya ditampilkan untuk transaksi hari ini.
+        LocalDate hariIni = LocalDate.now();
+
+        if (!hariIni.equals(tanggalTransaksi)) {
+            return null;
+        }
+
+        // Ambil anggaran khusus tanggal hari ini.
+        double batas = manajer.getAnggaran()
+            .getBatasHarian(tanggalTransaksi);
+
+        // Jika belum diatur, transaksi tetap bisa disimpan.
         if (batas <= 0) {
             return null;
         }
 
-        LocalDate hariIni = LocalDate.now();
-        if (!hariIni.equals(transaksi.getTanggal())) {
-            return null;
-        }
-
+        // Hitung seluruh pengeluaran pada tanggal transaksi.
         double terpakai = analisis.hitungPengeluaranHarian(
-            manajer.getSemuaTransaksi(), hariIni
+            manajer.getSemuaTransaksi(), tanggalTransaksi
         );
-        String status = manajer.getAnggaran().cekStatus(terpakai);
+
+        String status = manajer.getAnggaran().cekStatus(
+            tanggalTransaksi, terpakai
+        );
 
         if ("MELAMPAUI".equals(status)) {
             return "Pengeluaran hari ini MELAMPAUI batas harian!\n"
@@ -649,9 +656,6 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
 
     // ===================== KOMPONEN KECIL =====================
 
-    /**
-     * Kolom teks dengan teks petunjuk saat kosong.
-     */
     private static class HintField extends JTextField {
 
         private final String hint;
@@ -680,9 +684,6 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
         }
     }
 
-    /**
-     * Toggle dua pilihan: Pemasukan (hijau) dan Pengeluaran (merah).
-     */
     private static class SegmentedToggle extends JComponent {
 
         private String terpilih = PEMASUKAN;
@@ -712,7 +713,8 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
         }
 
         void setSelected(String jenis) {
-            terpilih = PEMASUKAN.equals(jenis) ? PEMASUKAN : PENGELUARAN;
+            terpilih = PEMASUKAN.equals(jenis)
+                ? PEMASUKAN : PENGELUARAN;
             repaint();
         }
 

@@ -636,11 +636,11 @@ filterPeriodeKategori.addActionListener(e -> {
 
     // ===================== GRAFIK: BULAN DAN MODE =====================
 
-    private void gantiBulan(int selisih) {
-        bulanTampil = bulanTampil.plusMonths(selisih);
-        perbaruiKeteranganGrafik();
-        refreshGrafik(manajer.getSemuaTransaksi());
-    }
+private void gantiBulan(int selisih) {
+    bulanTampil = bulanTampil.plusMonths(selisih);
+    refreshRingkasan();
+    perbaruiKeteranganGrafik();
+}
 
     private void perbaruiKeteranganGrafik() {
         subjudulGrafik.setText(
@@ -945,97 +945,125 @@ filterPeriodeKategori.addActionListener(e -> {
     /**
      * Memperbarui seluruh informasi keuangan.
      */
-    public void refreshRingkasan() {
+public void refreshRingkasan() {
 
-        List<Transaksi> daftar = manajer.getSemuaTransaksi();
+    List<Transaksi> semuaTransaksi = manajer.getSemuaTransaksi();
+    List<Transaksi> daftarBulan = new ArrayList<>();
 
-        double totalPemasukan = 0;
-        double totalPengeluaran = 0;
-        double saldo = 0;
+    double totalPemasukan = 0;
+    double totalPengeluaran = 0;
+    double saldo = 0;
 
-        for (Transaksi transaksi : daftar) {
+    // Ambil transaksi sesuai bulan yang dipilih
+    for (Transaksi transaksi : semuaTransaksi) {
 
-            double dampak = transaksi.hitungDampakSaldo();
-            saldo += dampak;
+        LocalDate tanggal = transaksi.getTanggal();
 
-            if (dampak > 0) {
-                totalPemasukan += dampak;
-            } else {
-                totalPengeluaran += Math.abs(dampak);
-            }
+        if (tanggal == null
+            || !YearMonth.from(tanggal).equals(bulanTampil)) {
+            continue;
         }
 
-        angkaPemasukan.setNilai(
-            UITheme.formatRupiah(totalPemasukan), UITheme.SUCCESS_DARK
-        );
-        angkaPengeluaran.setNilai(
-            UITheme.formatRupiah(totalPengeluaran), UITheme.DANGER_DARK
-        );
-        angkaSaldo.setNilai(
-            UITheme.formatRupiah(saldo),
-            saldo < 0 ? UITheme.DANGER_DARK : UITheme.PRIMARY_DARK
-        );
+        daftarBulan.add(transaksi);
 
-        refreshAnggaran(daftar);
-        refreshGrafik(daftar);
-        refreshPrioritas(daftar);
-        refreshKategori(daftar);
-        refreshKalender(daftar);
+        double dampak = transaksi.hitungDampakSaldo();
+        saldo += dampak;
 
-        revalidate();
-        repaint();
-    }
-
-    private void refreshAnggaran(List<Transaksi> daftar) {
-
-        double batas = manajer.getAnggaran().getBatasHarian();
-
-        if (batas <= 0) {
-            badgeStatus.setText("BELUM DIATUR");
-            badgeStatus.setWarna(UITheme.TEXT_MUTED, UITheme.BORDER);
-
-            angkaSisa.setNilai("-", UITheme.TEXT_MUTED);
-            labelTerpakai.setText("Belum ada batas harian");
-            labelTerpakai.setToolTipText(
-                "Atur lewat tombol Atur Anggaran di sidebar"
-            );
-
-            barAnggaran.setNilai(0);
-            barAnggaran.setWarna(UITheme.PRIMARY);
-            return;
-        }
-
-        double terpakai =
-            analisis.hitungPengeluaranHarian(daftar, LocalDate.now());
-
-        double sisa = manajer.getAnggaran().hitungSisa(terpakai);
-        String status = manajer.getAnggaran().cekStatus(terpakai);
-        double persen = (terpakai / batas) * 100;
-
-        angkaSisa.setNilai(
-            UITheme.formatRupiah(sisa),
-            sisa < 0 ? UITheme.DANGER_DARK : UITheme.PRIMARY_DARK
-        );
-
-        String ketTerpakai = "Terpakai " + UITheme.formatRupiah(terpakai)
-            + " dari " + UITheme.formatRupiah(batas);
-        labelTerpakai.setText(ketTerpakai);
-        labelTerpakai.setToolTipText(ketTerpakai);
-
-        barAnggaran.setNilai((int) Math.round(persen));
-        badgeStatus.setText(status);
-
-        if ("MELAMPAUI".equals(status)) {
-            badgeStatus.setWarna(UITheme.DANGER_DARK, UITheme.DANGER_SOFT);
-            barAnggaran.setWarna(UITheme.DANGER);
-        } else if ("MENDEKATI".equals(status)) {
-            badgeStatus.setWarna(UITheme.WARNING_DARK, UITheme.WARNING_SOFT);
-            barAnggaran.setWarna(UITheme.WARNING);
+        if (dampak > 0) {
+            totalPemasukan += dampak;
         } else {
-            badgeStatus.setWarna(UITheme.SUCCESS_DARK, UITheme.SUCCESS_SOFT);
-            barAnggaran.setWarna(UITheme.SUCCESS);
+            totalPengeluaran += Math.abs(dampak);
         }
     }
+
+    // Perbarui kartu statistik
+    angkaPemasukan.setNilai(
+        UITheme.formatRupiah(totalPemasukan),
+        UITheme.SUCCESS_DARK
+    );
+
+    angkaPengeluaran.setNilai(
+        UITheme.formatRupiah(totalPengeluaran),
+        UITheme.DANGER_DARK
+    );
+
+    angkaSaldo.setNilai(
+        UITheme.formatRupiah(saldo),
+        saldo < 0 ? UITheme.DANGER_DARK : UITheme.PRIMARY_DARK
+    );
+
+    // Anggaran harian tetap menggunakan kondisi hari ini
+    refreshAnggaran(semuaTransaksi);
+
+    // Komponen dashboard
+    refreshGrafik(semuaTransaksi);
+    refreshPrioritas(daftarBulan);
+    refreshKategori(daftarBulan);
+    refreshKalender(semuaTransaksi);
+
+    revalidate();
+    repaint();
+}
+
+private void refreshAnggaran(List<Transaksi> daftar) {
+
+    LocalDate hariIni = LocalDate.now();
+
+    double batas = manajer.getAnggaran().getBatasHarian(hariIni);
+
+    if (batas <= 0) {
+        badgeStatus.setText("BELUM DIATUR");
+        badgeStatus.setWarna(UITheme.TEXT_MUTED, UITheme.BORDER);
+
+        angkaSisa.setNilai("-", UITheme.TEXT_MUTED);
+        labelTerpakai.setText("Belum ada batas harian");
+        labelTerpakai.setToolTipText(
+            "Atur lewat tombol Atur Anggaran di sidebar"
+        );
+
+        barAnggaran.setNilai(0);
+        barAnggaran.setWarna(UITheme.PRIMARY);
+        return;
+    }
+
+    double terpakai =
+        analisis.hitungPengeluaranHarian(daftar, hariIni);
+
+    double sisa =
+        manajer.getAnggaran().hitungSisa(hariIni, terpakai);
+
+    String status =
+        manajer.getAnggaran().cekStatus(hariIni, terpakai);
+
+    double persen = (terpakai / batas) * 100;
+
+    angkaSisa.setNilai(
+        UITheme.formatRupiah(sisa),
+        sisa < 0 ? UITheme.DANGER_DARK : UITheme.PRIMARY_DARK
+    );
+
+    String ketTerpakai = "Terpakai "
+        + UITheme.formatRupiah(terpakai)
+        + " dari " + UITheme.formatRupiah(batas);
+
+    labelTerpakai.setText(ketTerpakai);
+    labelTerpakai.setToolTipText(ketTerpakai);
+
+    barAnggaran.setNilai((int) Math.round(persen));
+    badgeStatus.setText(status);
+
+    if ("MELAMPAUI".equals(status)) {
+        badgeStatus.setWarna(UITheme.DANGER_DARK, UITheme.DANGER_SOFT);
+        barAnggaran.setWarna(UITheme.DANGER);
+    } else if ("MENDEKATI".equals(status)) {
+        badgeStatus.setWarna(UITheme.WARNING_DARK, UITheme.WARNING_SOFT);
+        barAnggaran.setWarna(UITheme.WARNING);
+    } else {
+        badgeStatus.setWarna(UITheme.SUCCESS_DARK, UITheme.SUCCESS_SOFT);
+        barAnggaran.setWarna(UITheme.SUCCESS);
+    }
+}
+      
 
     private void refreshPrioritas(List<Transaksi> daftar) {
 
@@ -1182,18 +1210,18 @@ private void refreshKategori(List<Transaksi> daftar) {
     panelKategori.repaint();
 }
 
-    private void refreshKalender(List<Transaksi> daftar) {
-        Set<LocalDate> tanggal = new HashSet<>();
+private void refreshKalender(List<Transaksi> daftar) {
+    Set<LocalDate> tanggal = new HashSet<>();
 
-        for (Transaksi transaksi : daftar) {
-            if (transaksi.getTanggal() != null) {
-                tanggal.add(transaksi.getTanggal());
-            }
+    for (Transaksi transaksi : daftar) {
+        if (transaksi.getTanggal() != null) {
+            tanggal.add(transaksi.getTanggal());
         }
-
-        kalender.setTanggalBertanda(tanggal);
-        kalender.keBulanIni();
     }
+
+    kalender.setTanggalBertanda(tanggal);
+    kalender.setBulan(bulanTampil);
+}
 
     // ===================== KOMPONEN KECIL =====================
 

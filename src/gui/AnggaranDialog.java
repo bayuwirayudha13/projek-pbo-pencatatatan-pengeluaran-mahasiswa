@@ -388,18 +388,21 @@ public class AnggaranDialog extends JDialog {
     /**
      * Mengisi kartu info dengan batas dan pengeluaran hari ini.
      */
-    private void perbaruiInfo() {
-        double batas = manajer.getAnggaran().getBatasHarian();
+private void perbaruiInfo() {
+    LocalDate hariIni = LocalDate.now();
 
-        double terpakai = analisis.hitungPengeluaranHarian(
-            manajer.getSemuaTransaksi(), LocalDate.now()
-        );
+    double batas = manajer.getAnggaran().getBatasHarian(hariIni);
 
-        labelBatasSaatIni.setText(
-            batas > 0 ? UITheme.formatRupiah(batas) : "Belum diatur"
-        );
-        labelTerpakaiInfo.setText(UITheme.formatRupiah(terpakai));
-    }
+    double terpakai = analisis.hitungPengeluaranHarian(
+        manajer.getSemuaTransaksi(), hariIni
+    );
+
+    labelBatasSaatIni.setText(
+        batas > 0 ? UITheme.formatRupiah(batas) : "Belum diatur"
+    );
+
+    labelTerpakaiInfo.setText(UITheme.formatRupiah(terpakai));
+}
 
     /**
      * Menampilkan nominal dalam format rupiah di sebelah label.
@@ -441,61 +444,67 @@ public class AnggaranDialog extends JDialog {
     /**
      * Menyimpan batas anggaran harian.
      */
-    private void simpanAnggaran() {
+private void simpanAnggaran() {
+
+    try {
+        double batas = ValidasiInput.validasiNominal(
+            normalisasiNominal(inputBatas.getText())
+        );
+
+        LocalDate hariIni = LocalDate.now();
+
+        // Simpan anggaran khusus untuk hari ini
+        manajer.getAnggaran().setBatasHarian(hariIni, batas);
 
         try {
-            double batas = ValidasiInput.validasiNominal(
-                normalisasiNominal(inputBatas.getText())
-            );
-
-            // Menyimpan batas melalui PengendaliAnggaran
-            manajer.getAnggaran().setBatasHarian(batas);
-
-            try {
-                manajer.simpanKeFile();
-            } catch (IOException e) {
-                JOptionPane.showMessageDialog(
-                    this,
-                    "Anggaran gagal disimpan ke file: " + e.getMessage(),
-                    "Kesalahan Penyimpanan",
-                    JOptionPane.ERROR_MESSAGE
-                );
-                return;
-            }
-
-            // Menghitung pengeluaran hari ini
-            double pengeluaranHariIni =
-                analisis.hitungPengeluaranHarian(
-                    manajer.getSemuaTransaksi(),
-                    LocalDate.now()
-                );
-
-            // Menghitung status dan sisa anggaran
-            String status =
-                manajer.getAnggaran().cekStatus(pengeluaranHariIni);
-
-            double sisa =
-                manajer.getAnggaran().hitungSisa(pengeluaranHariIni);
-
-            tampilkanHasil(batas, pengeluaranHariIni, sisa, status);
-
-        } catch (InputTidakValidException e) {
+            manajer.simpanKeFile();
+        } catch (IOException e) {
             JOptionPane.showMessageDialog(
                 this,
-                e.getMessage(),
-                "Input Tidak Valid",
+                "Anggaran gagal disimpan ke file: " + e.getMessage(),
+                "Kesalahan Penyimpanan",
                 JOptionPane.ERROR_MESSAGE
             );
-
-        } catch (IllegalArgumentException e) {
-            JOptionPane.showMessageDialog(
-                this,
-                e.getMessage(),
-                "Input Tidak Valid",
-                JOptionPane.ERROR_MESSAGE
-            );
+            return;
         }
+
+        // Hitung pengeluaran hari ini
+        double pengeluaranHariIni =
+            analisis.hitungPengeluaranHarian(
+                manajer.getSemuaTransaksi(),
+                hariIni
+            );
+
+        // Hitung status dan sisa anggaran
+        String status = manajer.getAnggaran().cekStatus(
+            hariIni, pengeluaranHariIni
+        );
+
+        double sisa = manajer.getAnggaran().hitungSisa(
+            hariIni, pengeluaranHariIni
+        );
+
+        tampilkanHasil(
+            batas, pengeluaranHariIni, sisa, status
+        );
+
+    } catch (InputTidakValidException e) {
+        JOptionPane.showMessageDialog(
+            this,
+            e.getMessage(),
+            "Input Tidak Valid",
+            JOptionPane.ERROR_MESSAGE
+        );
+
+    } catch (IllegalArgumentException e) {
+        JOptionPane.showMessageDialog(
+            this,
+            e.getMessage(),
+            "Input Tidak Valid",
+            JOptionPane.ERROR_MESSAGE
+        );
     }
+}
 
     // ===================== KOMPONEN KECIL =====================
 

@@ -1187,6 +1187,15 @@ public final class UITheme {
             tanggalHover = null;
             repaint();
         }
+        public void setBulan(YearMonth bulan) {
+    if (bulan == null) {
+        return;
+    }
+
+    this.bulan = bulan;
+    tanggalHover = null;
+    repaint();
+}
 
         /**
          * Mencari tanggal pada koordinat tertentu, atau null jika

@@ -1,3 +1,4 @@
+
 package gui;
 
 import analisis.AnalisisKeuangan;
@@ -23,7 +24,7 @@ import java.time.LocalDate;
  * Dikerjakan oleh: ALHIYA
  *
  * Mode tambah : tombol "Tambah".
- * Mode ubah   : tombol "Ubah", "Hapus", "Batal" (dipicu isiUntukUbah).
+ * Mode ubah   : tombol "Ubah", "Hapus", "Batal".
  */
 public class FormTransaksiPanel extends UITheme.RoundedPanel {
 
@@ -67,11 +68,13 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
         labelJudul = UITheme.label(
             "Tambah Transaksi", UITheme.font(Font.BOLD, 20), UITheme.TEXT
         );
+
         labelSubjudul = UITheme.label(
             "Catat pemasukan dan pengeluaranmu",
             UITheme.font(Font.PLAIN, 12),
             UITheme.TEXT_MUTED
         );
+
         labelJudul.setAlignmentX(Component.LEFT_ALIGNMENT);
         labelSubjudul.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -104,6 +107,7 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
         labelHintNominal = UITheme.label(
             " ", UITheme.font(Font.PLAIN, 12), UITheme.TEXT_MUTED
         );
+
         inputNominal.getDocument().addDocumentListener(
             new DocumentListener() {
                 @Override
@@ -130,17 +134,27 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
 
         // ---------- Tombol ----------
         tombolTambah = buatTombol(
-            "Tambah Pemasukan", UITheme.SUCCESS_DARK,
+            "Tambah Pemasukan",
+            UITheme.SUCCESS_DARK,
             UITheme.ModernButton.FILLED
         );
+
         tombolUbah = buatTombol(
-            "Ubah", UITheme.PRIMARY, UITheme.ModernButton.FILLED
+            "Ubah",
+            UITheme.PRIMARY,
+            UITheme.ModernButton.FILLED
         );
+
         tombolHapus = buatTombol(
-            "Hapus", UITheme.DANGER, UITheme.ModernButton.OUTLINE
+            "Hapus",
+            UITheme.DANGER,
+            UITheme.ModernButton.OUTLINE
         );
+
         tombolBatal = buatTombol(
-            "Batal", UITheme.TEXT_MUTED, UITheme.ModernButton.OUTLINE
+            "Batal",
+            UITheme.TEXT_MUTED,
+            UITheme.ModernButton.OUTLINE
         );
 
         tombolTambah.addActionListener(e -> prosesSimpan(false));
@@ -174,22 +188,37 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
 
         JPanel duaKolom = new JPanel(new GridLayout(1, 2, 14, 0));
         duaKolom.setOpaque(false);
-        duaKolom.add(buatKolom(buatLabelField("Tanggal"), inputTanggal));
-        duaKolom.add(buatKolom(buatLabelField("Kategori"), pilihanKategori));
+        duaKolom.add(buatKolom(
+            buatLabelField("Tanggal"), inputTanggal
+        ));
+        duaKolom.add(buatKolom(
+            buatLabelField("Kategori"), pilihanKategori
+        ));
 
         JPanel panelInput = new JPanel();
         panelInput.setLayout(new BoxLayout(panelInput, BoxLayout.Y_AXIS));
         panelInput.setOpaque(false);
 
         tambahBaris(panelInput, toggleJenis, 18);
-        tambahBaris(panelInput,
-            buatKolom(barisLabelNominal, inputNominal), 14);
+        tambahBaris(
+            panelInput,
+            buatKolom(barisLabelNominal, inputNominal),
+            14
+        );
         tambahBaris(panelInput, duaKolom, 14);
-        tambahBaris(panelInput,
-            buatKolom(labelDetail, pilihanDetail), 14);
-        tambahBaris(panelInput,
-            buatKolom(buatLabelField("Catatan (opsional)"), inputCatatan),
-            0);
+        tambahBaris(
+            panelInput,
+            buatKolom(labelDetail, pilihanDetail),
+            14
+        );
+        tambahBaris(
+            panelInput,
+            buatKolom(
+                buatLabelField("Catatan (opsional)"),
+                inputCatatan
+            ),
+            0
+        );
 
         // Isi awal kategori dan detail
         ubahPilihanJenis();
@@ -208,7 +237,6 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
 
     /**
      * Mengisi form dengan data transaksi dan masuk ke mode ubah.
-     * Dipanggil dari tabel saat baris dipilih.
      */
     public void isiUntukUbah(Transaksi t) {
         if (t == null) {
@@ -221,18 +249,29 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
         ubahPilihanJenis();
 
         inputNominal.setText(formatNominalUntukInput(t.getNominal()));
+
         inputTanggal.setText(
             t.getTanggal() == null
                 ? LocalDate.now().toString()
                 : t.getTanggal().toString()
         );
+
         pilihAtauTambah(pilihanKategori, t.getKategori());
-        inputCatatan.setText(t.getCatatan() == null ? "" : t.getCatatan());
+
+        inputCatatan.setText(
+            t.getCatatan() == null ? "" : t.getCatatan()
+        );
 
         if (t instanceof Pemasukan) {
-            pilihAtauTambah(pilihanDetail, ((Pemasukan) t).getSumber());
+            pilihAtauTambah(
+                pilihanDetail,
+                ((Pemasukan) t).getSumber()
+            );
         } else if (t instanceof Pengeluaran) {
-            pilihAtauTambah(pilihanDetail, ((Pengeluaran) t).getPrioritas());
+            pilihAtauTambah(
+                pilihanDetail,
+                ((Pengeluaran) t).getPrioritas()
+            );
         }
 
         setModeUbah(true);
@@ -256,26 +295,38 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
         kolom.add(label);
         kolom.add(Box.createVerticalStrut(6));
         kolom.add(isi);
+
         return kolom;
     }
 
-    private void tambahBaris(JPanel induk, JComponent baris, int jarak) {
+    private void tambahBaris(
+        JPanel induk,
+        JComponent baris,
+        int jarak
+    ) {
         baris.setAlignmentX(Component.LEFT_ALIGNMENT);
         baris.setMaximumSize(new Dimension(
-            Integer.MAX_VALUE, baris.getPreferredSize().height
+            Integer.MAX_VALUE,
+            baris.getPreferredSize().height
         ));
+
         induk.add(baris);
+
         if (jarak > 0) {
             induk.add(Box.createVerticalStrut(jarak));
         }
     }
 
     private UITheme.ModernButton buatTombol(
-        String teks, Color warna, int gaya
+        String teks,
+        Color warna,
+        int gaya
     ) {
         UITheme.ModernButton tombol =
             new UITheme.ModernButton(teks, warna, gaya);
+
         tombol.setPreferredSize(new Dimension(100, 44));
+
         return tombol;
     }
 
@@ -336,14 +387,20 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
     private void setModeUbah(boolean ubah) {
         if (ubah) {
             labelJudul.setText("Ubah Transaksi");
+
             labelSubjudul.setText(
                 "Mengedit " + idSedangDiubah
                 + ". Ubah data lalu tekan Ubah."
             );
+
             layoutTombol.show(panelTombol, "ubah");
+
         } else {
             labelJudul.setText("Tambah Transaksi");
-            labelSubjudul.setText("Catat pemasukan dan pengeluaranmu");
+            labelSubjudul.setText(
+                "Catat pemasukan dan pengeluaranmu"
+            );
+
             layoutTombol.show(panelTombol, "tambah");
         }
     }
@@ -379,8 +436,13 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
             double nominal = ValidasiInput.validasiNominal(
                 normalisasiNominal(teks)
             );
-            labelHintNominal.setText("= " + UITheme.formatRupiah(nominal));
+
+            labelHintNominal.setText(
+                "= " + UITheme.formatRupiah(nominal)
+            );
+
             labelHintNominal.setForeground(UITheme.TEXT_MUTED);
+
         } catch (InputTidakValidException e) {
             labelHintNominal.setText("Nominal belum valid");
             labelHintNominal.setForeground(UITheme.DANGER_DARK);
@@ -390,17 +452,17 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
     // ===================== LOGIKA DATA =====================
 
     /**
-     * Merapikan input nominal sebelum divalidasi:
-     * - awalan "Rp" dibuang
-     * - titik pemisah ribuan (50.000) dibuang, karena
-     *   Double.parseDouble("50.000") akan terbaca 50.0
+     * Merapikan input nominal sebelum divalidasi.
      */
     private String normalisasiNominal(String teks) {
         String hasil = teks == null ? "" : teks.trim();
+
         hasil = hasil.replaceAll("(?i)^rp\\s*", "");
+
         if (hasil.matches("\\d{1,3}(\\.\\d{3})+")) {
             hasil = hasil.replace(".", "");
         }
+
         return hasil;
     }
 
@@ -408,29 +470,36 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
         if (nominal == Math.rint(nominal)) {
             return String.valueOf((long) nominal);
         }
+
         return String.valueOf(nominal);
     }
 
-    private void pilihAtauTambah(JComboBox<String> combo, String nilai) {
+    private void pilihAtauTambah(
+        JComboBox<String> combo,
+        String nilai
+    ) {
         if (nilai == null) {
             return;
         }
 
         boolean ada = false;
+
         for (int i = 0; i < combo.getItemCount(); i++) {
             if (nilai.equals(combo.getItemAt(i))) {
                 ada = true;
                 break;
             }
         }
+
         if (!ada) {
             combo.addItem(nilai);
         }
+
         combo.setSelectedItem(nilai);
     }
 
     /**
-     * Menambah transaksi baru, atau mengubah transaksi yang sedang diedit.
+     * Menambah transaksi baru atau mengubah transaksi yang sedang diedit.
      */
     private void prosesSimpan(boolean modeUbah) {
 
@@ -443,31 +512,48 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
             double nominal = ValidasiInput.validasiNominal(
                 normalisasiNominal(inputNominal.getText())
             );
+
             LocalDate tanggal = ValidasiInput.validasiTanggal(
                 inputTanggal.getText()
             );
+
             String kategori = ValidasiInput.validasiWajibIsi(
                 (String) pilihanKategori.getSelectedItem(),
                 "Kategori"
             );
+
             String detail = ValidasiInput.validasiWajibIsi(
                 (String) pilihanDetail.getSelectedItem(),
                 PEMASUKAN.equals(jenis)
                     ? "Sumber pemasukan"
                     : "Prioritas pengeluaran"
             );
+
             String catatan = inputCatatan.getText().trim();
 
-            String id = ubah ? idSedangDiubah : manajer.generateId();
+            String id = ubah
+                ? idSedangDiubah
+                : manajer.generateId();
 
             Transaksi transaksi;
+
             if (PEMASUKAN.equals(jenis)) {
                 transaksi = new Pemasukan(
-                    id, tanggal, nominal, kategori, catatan, detail
+                    id,
+                    tanggal,
+                    nominal,
+                    kategori,
+                    catatan,
+                    detail
                 );
             } else {
                 transaksi = new Pengeluaran(
-                    id, tanggal, nominal, kategori, catatan, detail
+                    id,
+                    tanggal,
+                    nominal,
+                    kategori,
+                    catatan,
+                    detail
                 );
             }
 
@@ -479,13 +565,16 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
 
             try {
                 manajer.simpanKeFile();
+
             } catch (IOException e) {
                 JOptionPane.showMessageDialog(
                     this,
-                    "Transaksi gagal disimpan ke file: " + e.getMessage(),
+                    "Transaksi gagal disimpan ke file: "
+                        + e.getMessage(),
                     "Kesalahan Penyimpanan",
                     JOptionPane.ERROR_MESSAGE
                 );
+
                 return;
             }
 
@@ -497,6 +586,7 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
             String pesan = ubah
                 ? "Transaksi berhasil diubah!"
                 : "Transaksi berhasil disimpan!";
+
             String peringatan = cekPeringatanAnggaran(transaksi);
 
             if (peringatan != null) {
@@ -506,6 +596,7 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
                     "Peringatan Anggaran",
                     JOptionPane.WARNING_MESSAGE
                 );
+
             } else {
                 JOptionPane.showMessageDialog(
                     this,
@@ -552,7 +643,8 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
 
         int pilihan = JOptionPane.showOptionDialog(
             this,
-            "Yakin ingin menghapus transaksi " + idSedangDiubah + "?\n"
+            "Yakin ingin menghapus transaksi "
+                + idSedangDiubah + "?\n"
                 + "Tindakan ini tidak dapat dibatalkan.",
             "Konfirmasi Hapus",
             JOptionPane.YES_NO_OPTION,
@@ -568,6 +660,7 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
 
         try {
             manajer.hapusTransaksi(idSedangDiubah);
+
         } catch (IllegalArgumentException e) {
             JOptionPane.showMessageDialog(
                 this,
@@ -575,18 +668,22 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
                 "Gagal Menghapus",
                 JOptionPane.ERROR_MESSAGE
             );
+
             return;
         }
 
         try {
             manajer.simpanKeFile();
+
         } catch (IOException e) {
             JOptionPane.showMessageDialog(
                 this,
-                "Perubahan gagal disimpan ke file: " + e.getMessage(),
+                "Perubahan gagal disimpan ke file: "
+                    + e.getMessage(),
                 "Kesalahan Penyimpanan",
                 JOptionPane.ERROR_MESSAGE
             );
+
             return;
         }
 
@@ -605,8 +702,8 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
     }
 
     /**
-     * Mengembalikan teks peringatan jika pengeluaran hari ini
-     * mendekati atau melampaui batas harian; selain itu null.
+     * Memeriksa anggaran berdasarkan tanggal transaksi.
+     * Peringatan hanya ditampilkan untuk pengeluaran hari ini.
      */
     private String cekPeringatanAnggaran(Transaksi transaksi) {
 
@@ -614,20 +711,31 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
             return null;
         }
 
-        double batas = manajer.getAnggaran().getBatasHarian();
+        LocalDate hariIni = LocalDate.now();
+
+        // Peringatan hanya berlaku untuk transaksi tanggal hari ini.
+        if (transaksi.getTanggal() == null
+                || !hariIni.equals(transaksi.getTanggal())) {
+            return null;
+        }
+
+        // Ambil batas anggaran khusus tanggal hari ini.
+        double batas = manajer.getAnggaran()
+            .getBatasHarian(hariIni);
+
         if (batas <= 0) {
             return null;
         }
 
-        LocalDate hariIni = LocalDate.now();
-        if (!hariIni.equals(transaksi.getTanggal())) {
-            return null;
-        }
-
+        // Hitung total pengeluaran khusus tanggal hari ini.
         double terpakai = analisis.hitungPengeluaranHarian(
-            manajer.getSemuaTransaksi(), hariIni
+            manajer.getSemuaTransaksi(),
+            hariIni
         );
-        String status = manajer.getAnggaran().cekStatus(terpakai);
+
+        // Periksa status menggunakan tanggal yang sama.
+        String status = manajer.getAnggaran()
+            .cekStatus(hariIni, terpakai);
 
         if ("MELAMPAUI".equals(status)) {
             return "Pengeluaran hari ini MELAMPAUI batas harian!\n"
@@ -666,14 +774,17 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
 
             if (getText().isEmpty()) {
                 Graphics2D g2 = (Graphics2D) g.create();
+
                 UITheme.antialias(g2);
                 g2.setColor(new Color(156, 163, 175));
                 g2.setFont(getFont());
 
                 Insets in = getInsets();
                 FontMetrics fm = g2.getFontMetrics();
+
                 int y = (getHeight() - fm.getHeight()) / 2
                     + fm.getAscent();
+
                 g2.drawString(hint, in.left, y);
                 g2.dispose();
             }
@@ -681,7 +792,7 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
     }
 
     /**
-     * Toggle dua pilihan: Pemasukan (hijau) dan Pengeluaran (merah).
+     * Toggle dua pilihan: Pemasukan dan Pengeluaran.
      */
     private static class SegmentedToggle extends JComponent {
 
@@ -696,8 +807,11 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
             addMouseListener(new MouseAdapter() {
                 @Override
                 public void mousePressed(MouseEvent e) {
+
                     String pilihan = e.getX() < getWidth() / 2
-                        ? PEMASUKAN : PENGELUARAN;
+                        ? PEMASUKAN
+                        : PENGELUARAN;
+
                     if (!pilihan.equals(terpilih)) {
                         terpilih = pilihan;
                         repaint();
@@ -712,13 +826,17 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
         }
 
         void setSelected(String jenis) {
-            terpilih = PEMASUKAN.equals(jenis) ? PEMASUKAN : PENGELUARAN;
+            terpilih = PEMASUKAN.equals(jenis)
+                ? PEMASUKAN
+                : PENGELUARAN;
+
             repaint();
         }
 
         @Override
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
+
             UITheme.antialias(g2);
 
             int w = getWidth();
@@ -730,39 +848,84 @@ public class FormTransaksiPanel extends UITheme.RoundedPanel {
             g2.fillRoundRect(0, 0, w, h, 16, 16);
 
             boolean masuk = PEMASUKAN.equals(terpilih);
-            g2.setColor(masuk ? UITheme.SUCCESS_DARK : UITheme.DANGER);
-            g2.fillRoundRect(
-                pad + (masuk ? 0 : lebar), pad, lebar, h - pad * 2, 12, 12
+
+            g2.setColor(
+                masuk ? UITheme.SUCCESS_DARK : UITheme.DANGER
             );
 
-            gambarSegmen(g2, PEMASUKAN, UITheme.IconType.INCOME,
-                pad, lebar, h, masuk);
-            gambarSegmen(g2, PENGELUARAN, UITheme.IconType.EXPENSE,
-                pad + lebar, lebar, h, !masuk);
+            g2.fillRoundRect(
+                pad + (masuk ? 0 : lebar),
+                pad,
+                lebar,
+                h - pad * 2,
+                12,
+                12
+            );
+
+            gambarSegmen(
+                g2,
+                PEMASUKAN,
+                UITheme.IconType.INCOME,
+                pad,
+                lebar,
+                h,
+                masuk
+            );
+
+            gambarSegmen(
+                g2,
+                PENGELUARAN,
+                UITheme.IconType.EXPENSE,
+                pad + lebar,
+                lebar,
+                h,
+                !masuk
+            );
 
             g2.dispose();
         }
 
         private void gambarSegmen(
-            Graphics2D g2, String teks, UITheme.IconType ikon,
-            int x, int lebar, int tinggi, boolean aktif
+            Graphics2D g2,
+            String teks,
+            UITheme.IconType ikon,
+            int x,
+            int lebar,
+            int tinggi,
+            boolean aktif
         ) {
-            Color warna = aktif ? Color.WHITE : UITheme.TEXT_MUTED;
+            Color warna = aktif
+                ? Color.WHITE
+                : UITheme.TEXT_MUTED;
 
             g2.setFont(UITheme.font(Font.BOLD, 13));
+
             FontMetrics fm = g2.getFontMetrics();
 
             int ukuranIkon = 16;
             int jarak = 6;
+
             int total = ukuranIkon + jarak + fm.stringWidth(teks);
             int mulai = x + (lebar - total) / 2;
 
             new UITheme.VectorIcon(ikon, ukuranIkon, warna)
-                .paintIcon(this, g2, mulai, (tinggi - ukuranIkon) / 2);
+                .paintIcon(
+                    this,
+                    g2,
+                    mulai,
+                    (tinggi - ukuranIkon) / 2
+                );
 
             g2.setColor(warna);
-            int y = (tinggi - fm.getHeight()) / 2 + fm.getAscent();
-            g2.drawString(teks, mulai + ukuranIkon + jarak, y);
+
+            int y = (tinggi - fm.getHeight()) / 2
+                + fm.getAscent();
+
+            g2.drawString(
+                teks,
+                mulai + ukuranIkon + jarak,
+                y
+            );
         }
     }
 }

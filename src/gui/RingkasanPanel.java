@@ -24,6 +24,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.IntConsumer;
+import java.util.stream.Collectors;
 
 /**
  * Panel ringkasan keuangan (Dashboard).
@@ -636,11 +637,12 @@ filterPeriodeKategori.addActionListener(e -> {
 
     // ===================== GRAFIK: BULAN DAN MODE =====================
 
-    private void gantiBulan(int selisih) {
-        bulanTampil = bulanTampil.plusMonths(selisih);
-        perbaruiKeteranganGrafik();
-        refreshGrafik(manajer.getSemuaTransaksi());
-    }
+private void gantiBulan(int selisih) {
+    bulanTampil = bulanTampil.plusMonths(selisih);
+
+    perbaruiKeteranganGrafik();
+    refreshRingkasan();
+}
 
     private void perbaruiKeteranganGrafik() {
         subjudulGrafik.setText(
@@ -945,98 +947,132 @@ filterPeriodeKategori.addActionListener(e -> {
     /**
      * Memperbarui seluruh informasi keuangan.
      */
-    public void refreshRingkasan() {
+public void refreshRingkasan() {
+    List<Transaksi> semuaTransaksi = manajer.getSemuaTransaksi();
 
-        List<Transaksi> daftar = manajer.getSemuaTransaksi();
+    // Transaksi untuk statistik bulanan dan grafik
+    List<Transaksi> daftar = semuaTransaksi.stream()
+        .filter(transaksi -> transaksi.getTanggal() != null
+            && YearMonth.from(transaksi.getTanggal()).equals(bulanTampil))
+        .collect(Collectors.toList());
 
-        double totalPemasukan = 0;
-        double totalPengeluaran = 0;
-        double saldo = 0;
+    double totalPemasukan = 0;
+    double totalPengeluaran = 0;
+    double saldo = 0;
 
-        for (Transaksi transaksi : daftar) {
+    for (Transaksi transaksi : daftar) {
+        double dampak = transaksi.hitungDampakSaldo();
+        saldo += dampak;
 
-            double dampak = transaksi.hitungDampakSaldo();
-            saldo += dampak;
-
-            if (dampak > 0) {
-                totalPemasukan += dampak;
-            } else {
-                totalPengeluaran += Math.abs(dampak);
-            }
-        }
-
-        angkaPemasukan.setNilai(
-            UITheme.formatRupiah(totalPemasukan), UITheme.SUCCESS_DARK
-        );
-        angkaPengeluaran.setNilai(
-            UITheme.formatRupiah(totalPengeluaran), UITheme.DANGER_DARK
-        );
-        angkaSaldo.setNilai(
-            UITheme.formatRupiah(saldo),
-            saldo < 0 ? UITheme.DANGER_DARK : UITheme.PRIMARY_DARK
-        );
-
-        refreshAnggaran(daftar);
-        refreshGrafik(daftar);
-        refreshPrioritas(daftar);
-        refreshKategori(daftar);
-        refreshKalender(daftar);
-
-        revalidate();
-        repaint();
-    }
-
-    private void refreshAnggaran(List<Transaksi> daftar) {
-
-        double batas = manajer.getAnggaran().getBatasHarian();
-
-        if (batas <= 0) {
-            badgeStatus.setText("BELUM DIATUR");
-            badgeStatus.setWarna(UITheme.TEXT_MUTED, UITheme.BORDER);
-
-            angkaSisa.setNilai("-", UITheme.TEXT_MUTED);
-            labelTerpakai.setText("Belum ada batas harian");
-            labelTerpakai.setToolTipText(
-                "Atur lewat tombol Atur Anggaran di sidebar"
-            );
-
-            barAnggaran.setNilai(0);
-            barAnggaran.setWarna(UITheme.PRIMARY);
-            return;
-        }
-
-        double terpakai =
-            analisis.hitungPengeluaranHarian(daftar, LocalDate.now());
-
-        double sisa = manajer.getAnggaran().hitungSisa(terpakai);
-        String status = manajer.getAnggaran().cekStatus(terpakai);
-        double persen = (terpakai / batas) * 100;
-
-        angkaSisa.setNilai(
-            UITheme.formatRupiah(sisa),
-            sisa < 0 ? UITheme.DANGER_DARK : UITheme.PRIMARY_DARK
-        );
-
-        String ketTerpakai = "Terpakai " + UITheme.formatRupiah(terpakai)
-            + " dari " + UITheme.formatRupiah(batas);
-        labelTerpakai.setText(ketTerpakai);
-        labelTerpakai.setToolTipText(ketTerpakai);
-
-        barAnggaran.setNilai((int) Math.round(persen));
-        badgeStatus.setText(status);
-
-        if ("MELAMPAUI".equals(status)) {
-            badgeStatus.setWarna(UITheme.DANGER_DARK, UITheme.DANGER_SOFT);
-            barAnggaran.setWarna(UITheme.DANGER);
-        } else if ("MENDEKATI".equals(status)) {
-            badgeStatus.setWarna(UITheme.WARNING_DARK, UITheme.WARNING_SOFT);
-            barAnggaran.setWarna(UITheme.WARNING);
+        if (dampak > 0) {
+            totalPemasukan += dampak;
         } else {
-            badgeStatus.setWarna(UITheme.SUCCESS_DARK, UITheme.SUCCESS_SOFT);
-            barAnggaran.setWarna(UITheme.SUCCESS);
+            totalPengeluaran += Math.abs(dampak);
         }
     }
 
+    angkaPemasukan.setNilai(
+        UITheme.formatRupiah(totalPemasukan),
+        UITheme.SUCCESS_DARK
+    );
+
+    angkaPengeluaran.setNilai(
+        UITheme.formatRupiah(totalPengeluaran),
+        UITheme.DANGER_DARK
+    );
+
+    angkaSaldo.setNilai(
+        UITheme.formatRupiah(saldo),
+        saldo < 0 ? UITheme.DANGER_DARK : UITheme.PRIMARY_DARK
+    );
+
+    // Anggaran menggunakan seluruh transaksi untuk tanggal hari ini
+    refreshAnggaran(semuaTransaksi);
+
+    // Bagian lain tetap mengikuti bulan yang dipilih
+    refreshGrafik(daftar);
+    refreshPrioritas(daftar);
+    refreshKategori(daftar);
+
+    // Kalender menggunakan seluruh transaksi
+    refreshKalender(semuaTransaksi);
+
+    revalidate();
+    repaint();
+}
+
+   private void refreshAnggaran(List<Transaksi> semuaTransaksi) {
+    LocalDate tanggalHariIni = LocalDate.now();
+
+    double batas = manajer.getAnggaran()
+        .getBatasHarian(tanggalHariIni);
+
+    double terpakai = analisis.hitungPengeluaranHarian(
+        semuaTransaksi,
+        tanggalHariIni
+    );
+
+    if (batas <= 0) {
+        badgeStatus.setText("BELUM DIATUR");
+        badgeStatus.setWarna(UITheme.TEXT_MUTED, UITheme.BORDER);
+
+        angkaSisa.setNilai("-", UITheme.TEXT_MUTED);
+        labelTerpakai.setText("Belum ada batas harian");
+        labelTerpakai.setToolTipText(
+            "Atur lewat tombol Atur Anggaran di sidebar"
+        );
+
+        barAnggaran.setNilai(0);
+        barAnggaran.setWarna(UITheme.PRIMARY);
+        return;
+    }
+
+    double sisa = manajer.getAnggaran()
+        .hitungSisa(tanggalHariIni, terpakai);
+
+    String status = manajer.getAnggaran()
+        .cekStatus(tanggalHariIni, terpakai);
+
+    double persen = (terpakai / batas) * 100;
+
+    angkaSisa.setNilai(
+        UITheme.formatRupiah(sisa),
+        sisa < 0 ? UITheme.DANGER_DARK : UITheme.PRIMARY_DARK
+    );
+
+    String ketTerpakai = "Terpakai "
+        + UITheme.formatRupiah(terpakai)
+        + " dari "
+        + UITheme.formatRupiah(batas);
+
+    labelTerpakai.setText(ketTerpakai);
+    labelTerpakai.setToolTipText(ketTerpakai);
+
+    barAnggaran.setNilai((int) Math.round(persen));
+    badgeStatus.setText(status);
+
+    if ("MELAMPAUI".equals(status)) {
+        badgeStatus.setWarna(
+            UITheme.DANGER_DARK,
+            UITheme.DANGER_SOFT
+        );
+        barAnggaran.setWarna(UITheme.DANGER);
+
+    } else if ("MENDEKATI".equals(status)) {
+        badgeStatus.setWarna(
+            UITheme.WARNING_DARK,
+            UITheme.WARNING_SOFT
+        );
+        barAnggaran.setWarna(UITheme.WARNING);
+
+    } else {
+        badgeStatus.setWarna(
+            UITheme.SUCCESS_DARK,
+            UITheme.SUCCESS_SOFT
+        );
+        barAnggaran.setWarna(UITheme.SUCCESS);
+    }
+}
     private void refreshPrioritas(List<Transaksi> daftar) {
 
         double totalKebutuhan =
@@ -1072,46 +1108,45 @@ filterPeriodeKategori.addActionListener(e -> {
                 + String.format(Locale.US, "%.0f%%", persenKeinginan) + ")"
         );
     }
-private void refreshKategori(List<Transaksi> daftar) {
 
+private void refreshKategori(List<Transaksi> daftar) {
     Map<String, Double> perKategori = new HashMap<>();
     double total = 0;
 
-    LocalDate hariIni = LocalDate.now();
     LocalDate tanggalAwal;
     LocalDate tanggalAkhir;
 
-    // Menentukan rentang tanggal berdasarkan filter
+    // Menentukan rentang tanggal berdasarkan periode kategori
     switch (periodeKategori) {
         case "Harian":
-            tanggalAwal = hariIni;
-            tanggalAkhir = hariIni;
+            tanggalAwal = bulanTampil.atDay(1);
+            tanggalAkhir = bulanTampil.atEndOfMonth();
             break;
 
         case "Mingguan":
-            tanggalAwal = hariIni.with(DayOfWeek.MONDAY);
-            tanggalAkhir = hariIni.with(DayOfWeek.SUNDAY);
+            tanggalAwal = bulanTampil.atDay(1);
+            tanggalAkhir = bulanTampil.atEndOfMonth();
             break;
 
         default:
-            tanggalAwal = YearMonth.now().atDay(1);
-            tanggalAkhir = YearMonth.now().atEndOfMonth();
+            tanggalAwal = bulanTampil.atDay(1);
+            tanggalAkhir = bulanTampil.atEndOfMonth();
             break;
     }
 
     // Menghitung pengeluaran berdasarkan periode
     for (Transaksi transaksi : daftar) {
-
         LocalDate tanggal = transaksi.getTanggal();
 
         if (tanggal == null
-            || tanggal.isBefore(tanggalAwal)
-            || tanggal.isAfter(tanggalAkhir)) {
+                || tanggal.isBefore(tanggalAwal)
+                || tanggal.isAfter(tanggalAkhir)) {
             continue;
         }
 
         double dampak = transaksi.hitungDampakSaldo();
 
+        // Hanya menghitung transaksi pengeluaran
         if (dampak >= 0) {
             continue;
         }
@@ -1141,7 +1176,6 @@ private void refreshKategori(List<Transaksi> daftar) {
     panelKategori.removeAll();
 
     if (urut.isEmpty()) {
-
         JLabel kosong = UITheme.label(
             "Belum ada pengeluaran pada periode ini.",
             UITheme.font(Font.PLAIN, 13),
@@ -1150,15 +1184,12 @@ private void refreshKategori(List<Transaksi> daftar) {
 
         kosong.setBorder(new EmptyBorder(30, 0, 0, 0));
         kosong.setAlignmentX(Component.LEFT_ALIGNMENT);
-
         panelKategori.add(kosong);
 
     } else {
-
         int tampil = Math.min(JUMLAH_KATEGORI, urut.size());
 
         for (int i = 0; i < tampil; i++) {
-
             Map.Entry<String, Double> entri = urut.get(i);
 
             double persen = total > 0
@@ -1182,18 +1213,19 @@ private void refreshKategori(List<Transaksi> daftar) {
     panelKategori.repaint();
 }
 
-    private void refreshKalender(List<Transaksi> daftar) {
-        Set<LocalDate> tanggal = new HashSet<>();
+    //
+private void refreshKalender(List<Transaksi> daftar) {
+    Set<LocalDate> tanggal = new HashSet<>();
 
-        for (Transaksi transaksi : daftar) {
-            if (transaksi.getTanggal() != null) {
-                tanggal.add(transaksi.getTanggal());
-            }
+    for (Transaksi transaksi : daftar) {
+        if (transaksi.getTanggal() != null) {
+            tanggal.add(transaksi.getTanggal());
         }
-
-        kalender.setTanggalBertanda(tanggal);
-        kalender.keBulanIni();
     }
+
+    kalender.setTanggalBertanda(tanggal);
+    kalender.setBulan(bulanTampil);
+}
 
     // ===================== KOMPONEN KECIL =====================
 

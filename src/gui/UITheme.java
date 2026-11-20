@@ -232,37 +232,30 @@ public final class UITheme {
             );
         }
 
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            antialias(g2);
+@Override
+protected void paintComponent(Graphics g) {
+    Graphics2D g2 = (Graphics2D) g.create();
+    antialias(g2);
 
-            int x = shadow ? SIDE : 0;
-            int y = shadow ? TOP : 0;
-            int w = getWidth() - (shadow ? SIDE * 2 : 0);
-            int h = getHeight() - (shadow ? TOP + BOTTOM : 0);
+    int x = shadow ? SIDE : 0;
+    int y = shadow ? TOP : 0;
+    int w = getWidth() - (shadow ? SIDE * 2 : 0);
+    int h = getHeight() - (shadow ? TOP + BOTTOM : 0);
 
-            if (shadow) {
-                for (int i = SIDE; i >= 1; i--) {
-                    g2.setColor(new Color(38, 33, 100, 7));
-                    g2.fill(new RoundRectangle2D.Float(
-                        x - i, y - i + 3, w + i * 2, h + i * 2,
-                        arc + i * 2, arc + i * 2
-                    ));
-                }
-            }
+    // Panel tetap memiliki warna dan sudut membulat,
+    // tetapi efek bayangan dihilangkan.
+    g2.setColor(fill);
+    g2.fillRoundRect(x, y, w, h, arc, arc);
 
-            g2.setColor(fill);
-            g2.fillRoundRect(x, y, w, h, arc, arc);
+    // Border tetap dipertahankan jika digunakan.
+    if (borderColor != null) {
+        g2.setColor(borderColor);
+        g2.drawRoundRect(x, y, w - 1, h - 1, arc, arc);
+    }
 
-            if (borderColor != null) {
-                g2.setColor(borderColor);
-                g2.drawRoundRect(x, y, w - 1, h - 1, arc, arc);
-            }
-
-            g2.dispose();
-            super.paintComponent(g);
-        }
+    g2.dispose();
+    super.paintComponent(g);
+}
     }
 
     // ===================== TOMBOL MODERN =====================
@@ -1172,7 +1165,15 @@ public final class UITheme {
                 ? Collections.<LocalDate>emptySet() : tanggal;
             repaint();
         }
+public void setBulan(YearMonth bulan) {
+    if (bulan == null) {
+        return;
+    }
 
+    this.bulan = bulan;
+    tanggalHover = null;
+    repaint();
+}
         /**
          * Aksi saat sebuah tanggal diklik (tanggal dengan atau tanpa titik).
          */
@@ -1344,7 +1345,7 @@ public final class UITheme {
     // ===================== IKON VEKTOR =====================
     public enum IconType {
         DASHBOARD, ADD, HISTORY, BUDGET, INCOME, EXPENSE, BALANCE, SEARCH,
-        CALENDAR, CHART, PIE, TAG
+        CALENDAR, CHART, PIE, TAG, TRASH
     }
 
     /**
@@ -1502,7 +1503,45 @@ public final class UITheme {
                     g2.fillOval((int) (s * 0.64), (int) (s * 0.28),
                         (int) (s * 0.10) + 1, (int) (s * 0.10) + 1);
                     break;
-                }
+                }case TRASH: {
+    // Badan tempat sampah
+    g2.drawRoundRect(
+        (int) (s * 0.25), (int) (s * 0.32),
+        (int) (s * 0.50), (int) (s * 0.53),
+        3, 3
+    );
+
+    // Tutup tempat sampah
+    g2.drawLine(
+        (int) (s * 0.18), (int) (s * 0.27),
+        (int) (s * 0.82), (int) (s * 0.27)
+    );
+
+    // Pegangan
+    g2.drawLine(
+        (int) (s * 0.40), (int) (s * 0.18),
+        (int) (s * 0.60), (int) (s * 0.18)
+    );
+    g2.drawLine(
+        (int) (s * 0.40), (int) (s * 0.18),
+        (int) (s * 0.40), (int) (s * 0.27)
+    );
+    g2.drawLine(
+        (int) (s * 0.60), (int) (s * 0.18),
+        (int) (s * 0.60), (int) (s * 0.27)
+    );
+
+    // Garis di dalam tempat sampah
+    g2.drawLine(
+        (int) (s * 0.42), (int) (s * 0.42),
+        (int) (s * 0.42), (int) (s * 0.73)
+    );
+    g2.drawLine(
+        (int) (s * 0.58), (int) (s * 0.42),
+        (int) (s * 0.58), (int) (s * 0.73)
+    );
+    break;
+}
                 default:
                     break;
             }

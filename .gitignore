@@ -7,3 +7,5 @@ bin/
 nbproject/private/
 data/transaksi.csv
 data/anggaran.csv
+data/sampah.csv
+data/tabungan.csv
